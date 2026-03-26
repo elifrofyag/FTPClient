@@ -59,7 +59,7 @@ public class FTPConnection {
             throw new IOException("Could not enter passive mode: " + response.getMessage());
         }
 
-        // The response format is usually: 227 Entering Passive Mode (h1,h2,h3,h4,p1,p2).
+        // eg 227 Entering Passive Mode (h1,h2,h3,h4,p1,p2).
         String message = response.getMessage();
         int openParen = message.indexOf('(');
         int closeParen = message.indexOf(')');
@@ -83,7 +83,13 @@ public class FTPConnection {
         int p2 = Integer.parseInt(parts[5]);
         int dataPort = (p1 * 256) + p2;
 
-        return new Socket(ipAddress, dataPort);
+        System.out.println("DEBUG - Attempting to connect to Data Socket: " + ipAddress + ":" + dataPort);
+
+        try { Thread.sleep(100); } catch (InterruptedException e) { } // Small delay to ensure server is ready for data connection fix intermittent connection timeout
+
+        Socket dataSocket = new Socket();
+        dataSocket.connect(new java.net.InetSocketAddress(ipAddress, dataPort), 10000);
+        return dataSocket;
     }
 
     /**
@@ -96,40 +102,81 @@ public class FTPConnection {
             controlSocket.close();
         }
     }
-    /*
+/*
     public static void main(String[] args) {
         FTPConnection connection = new FTPConnection();
         try {
             System.out.println("Connecting to ftp.gnu.org...");
-            connection.connect("ftp.gnu.org", 21);
+            connection.connect("ftp.dlptest.com", 21);
+//            connection.connect("ftp.gnu.org", 21);
+
 
             // Read the initial welcome message from the server
             FTPResponse welcome = connection.readResponse();
-            System.out.println("Server: " + welcome);
+            System.out.println("Server 108: " + welcome);
 
             // Send Anonymous Login
             System.out.println("\nSending USER...");
-            connection.sendCommand("USER anonymous");
-            System.out.println("Server: " + connection.readResponse());
+            connection.sendCommand("USER dlpuser");
+//            connection.sendCommand("USER anonymous");
+            System.out.println("Server 113: " + connection.readResponse());
 
-            // Request Passive Mode
-            System.out.println("\nRequesting Passive Mode...");
-            Socket dataSocket = connection.openPassiveDataConnection();
-            System.out.println("Successfully opened Data Socket to: " +
-                    dataSocket.getInetAddress().getHostAddress() +
-                    " on port " + dataSocket.getPort());
+//             Send Password
+            System.out.println("\nSending PASS...");
+            connection.sendCommand("PASS rNrKYTX9g7z3RgJRmxWuGHbeu");
+            System.out.println("Server 118: " + connection.readResponse());
 
-            // Clean up
-            dataSocket.close();
-            connection.sendCommand("QUIT");
-            System.out.println("Server: " + connection.readResponse());
-            connection.close();
-            System.out.println("Connection closed safely.");
 
+
+            // cli
+            while (true) {
+                System.out.print("\nEnter FTP Command (or 'quit' to exit): ");
+                BufferedReader consoleReader = new BufferedReader(new InputStreamReader(System.in));
+                String command = consoleReader.readLine();
+                // pasv
+                if (command.equalsIgnoreCase("pasv")) {
+                    System.out.println("\nRequesting Passive Mode...");
+
+                    Socket dataSocket = connection.openPassiveDataConnection();
+                    System.out.println("Successfully opened Data Socket to: " +
+                            dataSocket.getInetAddress().getHostAddress() +
+                            " on port " + dataSocket.getPort());
+                    //  command from user
+                    String cmd = consoleReader.readLine();
+                    connection.sendCommand(cmd);
+                    System.out.println("Server PI 138: " + connection.readResponse());
+
+                    try (BufferedReader dataReader = new BufferedReader(new InputStreamReader(dataSocket.getInputStream()))) {
+                        String line;
+                        System.out.println("\n--- DATA RECEIVED ---");
+                        while ((line = dataReader.readLine()) != null) {
+                            System.out.println(line);
+                        }
+                        System.out.println("--- END OF DATA ---\n");
+                    } finally {
+                        dataSocket.close();
+                    }
+
+
+
+                    System.out.println("Server PI 159: " + connection.readResponse());
+                    continue;
+
+                }
+                if (command.equalsIgnoreCase("quit")) {
+                    connection.sendCommand("QUIT");
+                    System.out.println("Server: " + connection.readResponse());
+                    connection.close();
+                    System.out.println("Connection closed safely.");
+                    break;
+                }
+                connection.sendCommand(command);
+                System.out.println("Server 169: " + connection.readResponse());
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-     */
+ */
 }
