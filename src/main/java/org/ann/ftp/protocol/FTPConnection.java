@@ -85,7 +85,7 @@ public class FTPConnection {
 
         System.out.println("DEBUG - Attempting to connect to Data Socket: " + ipAddress + ":" + dataPort);
 
-        try { Thread.sleep(100); } catch (InterruptedException e) { } // Small delay to ensure server is ready for data connection fix intermittent connection timeout
+        try { Thread.sleep(100); } catch (InterruptedException e) { } // try to fix intermittent connection timeout
 
         Socket dataSocket = new Socket();
         dataSocket.connect(new java.net.InetSocketAddress(ipAddress, dataPort), 10000);
@@ -107,7 +107,7 @@ public class FTPConnection {
         FTPConnection connection = new FTPConnection();
         try {
             System.out.println("Connecting to ftp.gnu.org...");
-            connection.connect("ftp.dlptest.com", 21);
+            connection.connect("127.0.0.1", 21);
 //            connection.connect("ftp.gnu.org", 21);
 
 
@@ -117,13 +117,13 @@ public class FTPConnection {
 
             // Send Anonymous Login
             System.out.println("\nSending USER...");
-            connection.sendCommand("USER dlpuser");
+            connection.sendCommand("USER ann");
 //            connection.sendCommand("USER anonymous");
             System.out.println("Server 113: " + connection.readResponse());
 
 //             Send Password
             System.out.println("\nSending PASS...");
-            connection.sendCommand("PASS rNrKYTX9g7z3RgJRmxWuGHbeu");
+            connection.sendCommand("PASS ");
             System.out.println("Server 118: " + connection.readResponse());
 
 
@@ -177,6 +177,5 @@ public class FTPConnection {
             e.printStackTrace();
         }
     }
-
- */
+*/
 }
