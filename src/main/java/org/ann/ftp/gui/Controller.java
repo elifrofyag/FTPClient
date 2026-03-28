@@ -37,6 +37,7 @@ public class Controller {
     private FTPClient ftpClient;
     private File currentLocalDir;
     private String currentRemoteDir = "/";
+    private boolean isBusy = false;
 
     /**
      * This method is automatically called by JavaFX after the FXML file is loaded.
@@ -244,6 +245,16 @@ public class Controller {
 
 
     private void runFtpTask(NetworkTask taskLogic, Runnable onSuccess) {
+        if (isBusy) {
+            log("Command ignored: Waiting for previous task to finish...");
+            return;
+        }
+        isBusy = true;
+
+        if (btnConnect.getScene() != null) {
+            btnConnect.getScene().setCursor(javafx.scene.Cursor.WAIT); // loading spinner
+        }
+
         Task<Void> task = new Task<>() {
             @Override
             protected Void call() throws Exception {
@@ -253,12 +264,19 @@ public class Controller {
         };
 
         task.setOnSucceeded(e -> {
+            isBusy = false;
+            if (btnConnect.getScene() != null) {
+                btnConnect.getScene().setCursor(javafx.scene.Cursor.DEFAULT);
+            }
             if (onSuccess != null) onSuccess.run();
         });
 
         task.setOnFailed(e -> {
+            isBusy = false;
+            if (btnConnect.getScene() != null) {
+                btnConnect.getScene().setCursor(javafx.scene.Cursor.DEFAULT);
+            }
             Throwable ex = task.getException();
-
             log("ERROR: " + ex.getMessage());
 
             if (!(ex instanceof org.ann.ftp.util.FTPException)) {
@@ -266,7 +284,6 @@ public class Controller {
                 ex.printStackTrace();
             }
         });
-
         new Thread(task).start();
     }
 

@@ -83,7 +83,7 @@ public class FTPConnection {
         int p2 = Integer.parseInt(parts[5]);
         int dataPort = (p1 * 256) + p2;
 
-        System.out.println("DEBUG - Attempting to connect to Data Socket: " + ipAddress + ":" + dataPort);
+        System.out.println("DEBUG - Connecting to DATA socket: " + ipAddress + ":" + dataPort);
 
         try { Thread.sleep(100); } catch (InterruptedException e) { } // try to fix intermittent connection timeout
 
