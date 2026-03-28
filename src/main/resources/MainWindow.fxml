@@ -20,7 +20,7 @@
             <Label text="PASS" />
             <PasswordField fx:id="txtPass" text="" />
             <Button fx:id="btnConnect" mnemonicParsing="false" onAction="#handleConnect" text="CONNECT" />
-            <Button maxWidth="1.8E3" mnemonicParsing="false" onAction="#handleDisconnect" text="DISCONNECT" />
+            <Button fx:id="btnDisconnect" maxWidth="1.8E3" mnemonicParsing="false" onAction="#handleDisconnect" text="DISCONNECT" />
         </HBox>
     </top>
 
@@ -29,14 +29,14 @@
             <padding>
                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
             </padding>
-            <Button maxWidth="1.8E3" mnemonicParsing="false" onAction="#handleDownload" text="Download" />
-            <Button maxWidth="1.8E3" mnemonicParsing="false" onAction="#handleUpload" text="Upload" />
-            <Button maxWidth="1.8E3" mnemonicParsing="false" onAction="#handleDelete" text="Delete File" />
-            <Button maxWidth="1.8E3" mnemonicParsing="false" onAction="#handleMkdir" text="MKDir" />
-            <Button maxWidth="1.8E3" mnemonicParsing="false" onAction="#handleRmdir" text="RMDir" />
+            <Button fx:id="btnDownload" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#handleDownload" text="Download" />
+            <Button fx:id="btnUpload" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#handleUpload" text="Upload" />
+            <Button fx:id="btnDelete" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#handleDelete" text="Delete File" />
+            <Button fx:id="btnMkdir" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#handleMkdir" text="MKDir" />
+            <Button fx:id="btnRmdir" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#handleRmdir" text="RMDir" />
          <AnchorPane prefHeight="42.0" prefWidth="100.0">
             <children>
-                  <Button layoutX="22.0" layoutY="174.0" maxWidth="1.8E3" mnemonicParsing="false" onAction="#handleRefresh" text="Refresh" />
+                  <Button fx:id="btnRefresh" layoutX="22.0" layoutY="174.0" maxWidth="1.8E3" mnemonicParsing="false" onAction="#handleRefresh" text="Refresh" />
             </children>
          </AnchorPane>
         </VBox>
@@ -65,7 +65,17 @@
                         <Label fx:id="lblRemotePath" text="/" BorderPane.alignment="CENTER" />
                     </right>
                 </BorderPane>
-                <ListView fx:id="listRemote" VBox.vgrow="ALWAYS" />
+                <TableView fx:id="tableRemote" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="colName" prefWidth="92.0" text="NAME" />
+                        <TableColumn fx:id="colSize" prefWidth="156.0" text="SIZE" />
+                        <TableColumn fx:id="colDate" prefWidth="202.0" text="MODIFIED" />
+                        <TableColumn fx:id="colPerms" prefWidth="100.0" text="PERMISSIONS" />
+                    </columns>
+                    <columnResizePolicy>
+                        <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                    </columnResizePolicy>
+                </TableView>
             </VBox>
         </SplitPane>
     </center>

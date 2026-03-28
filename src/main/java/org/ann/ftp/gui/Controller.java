@@ -5,7 +5,10 @@ import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import org.ann.ftp.client.FTPClient;
+import org.ann.ftp.client.FTPFile;
+import org.ann.ftp.util.*;
 
 import java.io.File;
 import java.util.List;
@@ -21,7 +24,11 @@ public class Controller {
     @FXML private Button btnConnect;
 
     @FXML private ListView<String> listLocal;
-    @FXML private ListView<String> listRemote;
+    @FXML private TableView<FTPFile> tableRemote;
+    @FXML private TableColumn<FTPFile, String> colName;
+    @FXML private TableColumn<FTPFile, String> colSize;
+    @FXML private TableColumn<FTPFile, String> colDate;
+    @FXML private TableColumn<FTPFile, String> colPerms;
     @FXML private Label lblLocalPath;
     @FXML private Label lblRemotePath;
     @FXML private TextArea txtLog;
@@ -39,8 +46,8 @@ public class Controller {
     public void initialize() {
         ftpClient = new FTPClient();
         currentLocalDir = new File(System.getProperty("user.home"));
-
-        setupListViewDoubleClicks();
+        setupTableViewColumns();
+        setupTableViewDoubleClicks();
         loadLocalDirectory();
     }
 
@@ -70,7 +77,7 @@ public class Controller {
     void handleDisconnect(ActionEvent event) {
         log("Disconnecting...");
         runFtpTask(() -> ftpClient.quit(), () -> {
-            listRemote.getItems().clear();
+            tableRemote.getItems().clear();
             lblRemotePath.setText("Disconnected");
             log("Disconnected safely.");
         });
@@ -98,9 +105,9 @@ public class Controller {
 
     @FXML
     void handleDownload(ActionEvent event) {
-        String selection = listRemote.getSelectionModel().getSelectedItem();
-        if (selection != null && !selection.equals("..")) {
-            String remoteFile = extractFileName(selection);
+        FTPFile selection = tableRemote.getSelectionModel().getSelectedItem();
+        if (selection != null && !selection.equals("..")){
+            String remoteFile = selection.getName();
             File targetFile = new File(currentLocalDir, remoteFile);
             log("Downloading " + remoteFile + "...");
             runFtpTask(() -> ftpClient.get(remoteFile, targetFile.getAbsolutePath()),
@@ -113,9 +120,9 @@ public class Controller {
 
     @FXML
     void handleDelete(ActionEvent event) {
-        String selection = listRemote.getSelectionModel().getSelectedItem();
+        FTPFile selection = tableRemote.getSelectionModel().getSelectedItem();
         if (selection != null && !selection.equals("..")) {
-            String remoteFile = extractFileName(selection);
+            String remoteFile = selection.getName();
             log("Deleting file: " + remoteFile + "...");
             runFtpTask(() -> ftpClient.delete(remoteFile), this::refreshRemoteDirectory);
         }
@@ -136,9 +143,9 @@ public class Controller {
 
     @FXML
     void handleRmdir(ActionEvent event) {
-        String selection = listRemote.getSelectionModel().getSelectedItem();
+        FTPFile selection = tableRemote.getSelectionModel().getSelectedItem();
         if (selection != null && !selection.equals("..")) {
-            String targetDir = extractFileName(selection);
+            String targetDir = selection.getName();
             log("Removing directory: " + targetDir + "...");
             runFtpTask(() -> ftpClient.rmdir(targetDir), this::refreshRemoteDirectory);
         } else {
@@ -149,8 +156,15 @@ public class Controller {
     // =========================================================================
     // UI BEHAVIOR & HELPERS
     // =========================================================================
+    private void setupTableViewColumns(){
+        colName.setCellValueFactory(new PropertyValueFactory<>("name"));
+        colSize.setCellValueFactory(new PropertyValueFactory<>("sizeFormatted"));
+        colDate.setCellValueFactory(new PropertyValueFactory<>("date"));
+        colPerms.setCellValueFactory(new PropertyValueFactory<>("permissions"));
 
-    private void setupListViewDoubleClicks() {
+    }
+
+    private void setupTableViewDoubleClicks() {
         listLocal.setOnMouseClicked(e -> {
             if (e.getClickCount() == 2) {
                 String selection = listLocal.getSelectionModel().getSelectedItem();
@@ -168,11 +182,11 @@ public class Controller {
             }
         });
 
-        listRemote.setOnMouseClicked(e -> {
+        tableRemote.setOnMouseClicked(e -> {
             if (e.getClickCount() == 2) {
-                String selection = listRemote.getSelectionModel().getSelectedItem();
+                FTPFile selection = tableRemote.getSelectionModel().getSelectedItem();
                 if (selection != null) {
-                    String targetDir = selection.equals("..") ? ".." : extractFileName(selection);
+                    String targetDir = selection.equals("..") ? ".." : selection.getName();
                     log("Navigating to: " + targetDir);
                     runFtpTask(() -> {
                         ftpClient.cd(targetDir);
@@ -204,12 +218,22 @@ public class Controller {
     private void refreshRemoteDirectory() {
         log("Fetching remote directory list...");
         runFtpTask(() -> {
-            List<String> files = ftpClient.list("");
+            List<String> rawFiles = ftpClient.list("");
+
             Platform.runLater(() -> {
                 lblRemotePath.setText(currentRemoteDir);
-                listRemote.getItems().clear();
-                listRemote.getItems().add("..");
-                listRemote.getItems().addAll(files);
+                tableRemote.getItems().clear();
+
+                // Add the "Go Back" folder manually
+                tableRemote.getItems().add(new FTPFile("..", 0, "--", "drwxrwxrwx", true, ""));
+
+                // Parse the rest!
+                for (String rawLine : rawFiles) {
+                    FTPFile parsedFile = ListParser.parse(rawLine);
+                    if (parsedFile != null) {
+                        tableRemote.getItems().add(parsedFile);
+                    }
+                }
             });
         }, () -> log("Remote directory updated."));
     }
@@ -218,11 +242,6 @@ public class Controller {
         Platform.runLater(() -> txtLog.appendText(message + "\n"));
     }
 
-    private String extractFileName(String rawListLine) {
-        if (rawListLine == null || rawListLine.trim().isEmpty()) return "";
-        String[] parts = rawListLine.trim().split("\\s+");
-        return parts[parts.length - 1];
-    }
 
     private void runFtpTask(NetworkTask taskLogic, Runnable onSuccess) {
         Task<Void> task = new Task<>() {
@@ -243,7 +262,7 @@ public class Controller {
             log("ERROR: " + ex.getMessage());
 
             if (!(ex instanceof org.ann.ftp.util.FTPException)) {
-                System.err.println("\n--- UNEXPECTED SYSTEM ERROR ---");
+                System.err.println("\n--- SYSTEM ERROR ---");
                 ex.printStackTrace();
             }
         });
