@@ -4,7 +4,6 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.input.KeyCode;
 import javafx.stage.Stage;
 
 public class Main extends Application {
@@ -14,16 +13,20 @@ public class Main extends Application {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/MainWindow.fxml"));
         Parent root = loader.load();
 
+        org.ann.ftp.gui.Controller controller = loader.getController();
+
         Scene scene = new Scene(root, 1000, 700);
         scene.getStylesheets().add(
                 getClass().getResource("/styles.css").toExternalForm()
         );
         primaryStage.setTitle("ann's FTP Client");
         primaryStage.setScene(scene);
-        primaryStage.show();
-    }
 
-    public static void main(String[] args) {
-        launch(args);
+        primaryStage.setOnCloseRequest(event -> {
+            controller.shutdown();
+            javafx.application.Platform.exit();
+            System.exit(0);
+        });
+        primaryStage.show();
     }
 }

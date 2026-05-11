@@ -13,6 +13,8 @@ import org.ann.ftp.util.*;
 import java.io.File;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Controller {
 
@@ -38,6 +40,8 @@ public class Controller {
     private File currentLocalDir;
     private String currentRemoteDir = "/";
     private boolean isBusy = false;
+
+    private final ExecutorService executor = Executors.newFixedThreadPool(2);
 
     /**
      * This method is automatically called by JavaFX after the FXML file is loaded.
@@ -284,7 +288,22 @@ public class Controller {
                 ex.printStackTrace();
             }
         });
-        new Thread(task).start();
+        executor.submit(task);
+    }
+
+    public void shutdown() {
+        System.out.println("Initiating shutdown...");
+
+        if (executor != null && !executor.isShutdown()) {
+            executor.shutdownNow();
+        }
+
+        if (ftpClient != null) {
+            try {
+                ftpClient.quit();
+            } catch (Exception e) {
+            }
+        }
     }
 
     @FunctionalInterface
