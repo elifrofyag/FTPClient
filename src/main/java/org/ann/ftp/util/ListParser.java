@@ -9,10 +9,10 @@ public class ListParser {
             return null;
         }
 
-        // Unix style usually has 9 columns separated by whitespace:
-        // [0:Perms] [1:Links] [2:Owner] [3:Group] [4:Size] [5:Month] [6:Day] [7:Time/Year] [8:Name]
-        // We use regex "\\s+" to split by ANY amount of whitespace, up to a maximum of 9 chunks
-        // (so spaces inside filenames don't get split!)
+        // note: unix style  has 9 cols separated by space
+        // [0:perms] [1:links] [2:owner] [3:group] [4:size] [5:Mmonth] [6:day] [7:time/year] [8:name]
+        // -> regex "\\s+" to split by any amount of whitespace up to a max of 9
+        // (so spaces inside filenames don't get split)
         String[] parts = rawLine.trim().split("\\s+", 9);
 
         try {
@@ -21,17 +21,16 @@ public class ListParser {
                 boolean isDir = permissions.startsWith("d");
                 long size = Long.parseLong(parts[4]);
 
-                // Combine Month, Day, and Time into one clean string
-                String date = parts[5] + " " + parts[6] + " " + parts[7];
+
+                String date = parts[5] + " " + parts[6] + " " + parts[7]; //month day time into 1 str
                 String name = parts[8];
 
                 return new FTPFile(name, size, date, permissions, isDir, rawLine);
             }
         } catch (Exception e) {
-            // If parsing fails, we fall back to a safe default so the app doesn't crash
         }
 
-        // Fallback for weird formats (like Windows DOS style) or the ".." directory
+        // fallback for weird formats or the ".." entry
         return new FTPFile(rawLine, 0, "", "", false, rawLine);
     }
 }

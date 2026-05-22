@@ -4,7 +4,7 @@
     -fx-text-fill: #2b3437;
 }
 
-/* --- Surface --- */
+/* --- surface --- */
 .top-bar {
     -fx-background-color: #f8f9fa;
 }
@@ -21,7 +21,7 @@
     -fx-background-color: #ffffff;
 }
 
-/* --- Text Fields & Inputs --- */
+/* --- text field and inputs --- */
 .text-field, .password-field {
     -fx-background-color: #f1f4f6;
     -fx-background-radius: 4px;
@@ -35,7 +35,7 @@
     -fx-background-color: #cfe6f2;
 }
 
-/* --- Buttons --- */
+/* --- buttons --- */
 .button {
     -fx-cursor: hand;
     -fx-background-radius: 0.375em;
@@ -58,14 +58,13 @@
 }
 
 
-/* --- Tables & Lists --- */
+/* --- tables & lists --- */
 .table-view, .list-view {
     -fx-background-color: white;
     -fx-border-width: 0;
     -fx-background-insets: 0;
 }
 
-/* Remove column headers background and borders */
 .table-view .column-header-background {
     -fx-background-color: #f8f9fa;
     -fx-padding: 0 0 5 0;
@@ -79,7 +78,7 @@
     -fx-font-size: 9px;
 }
 
-/* Row Styling */
+/* row styling */
 
 .table-cell {
     -fx-border-width: 0;
@@ -91,7 +90,7 @@
 }
 
 
-/* Selection State */
+/* selection state */
 .list-cell:filled:selected, .table-row-cell:selected {
     -fx-background-color: #CFE6F2;
     -fx-text-fill: #2b3437;
@@ -101,7 +100,7 @@
 }
 
 
-/* --- SplitPane --- */
+/* --- splitpane --- */
 .split-pane {
     -fx-background-color: transparent;
     -fx-border-width: 0;
@@ -115,7 +114,7 @@
 }
 
 
-/* --- Log Console --- */
+/* --- log console --- */
 .text-area {
     -fx-background-color: #f1f4f6;
     -fx-text-fill: #2b3437;

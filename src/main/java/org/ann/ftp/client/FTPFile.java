@@ -24,6 +24,7 @@ public class FTPFile {
         if (size < 1024 * 1024) return (size / 1024) + " KB";
         return (size / (1024 * 1024)) + " MB";
     }
+    //getters but not used yet, but maybe in the future
     public String getDate() { return date; }
     public String getPermissions() { return permissions; }
     public boolean isDirectory() { return isDirectory; }

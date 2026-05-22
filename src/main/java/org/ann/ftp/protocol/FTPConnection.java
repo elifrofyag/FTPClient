@@ -8,8 +8,8 @@ import java.io.PrintWriter;
 import java.net.Socket;
 
 /**
- * FTPConnection manages the control connection to an FTP server, allowing us to send commands and read responses.
- * It also provides a method to open a passive data connection based on the server's response to the PASV command.
+ * FTPConnection manages the control connection to an FTP server. It allows sending commands and reading responses.
+ * It also provides a method to open a passive data connection based on the server's response to PASV command.
  *
  * @author Van An Nguyen
  */
@@ -19,7 +19,7 @@ public class FTPConnection {
     private PrintWriter writer;
 
     /**
-     * Establishes the control connection to the FTP server.
+     * Establishes control connection to FTP server.
      */
     public void connect(String host, int port) throws IOException {
         controlSocket = new Socket(host, port);
@@ -29,17 +29,17 @@ public class FTPConnection {
     }
 
     /**
-     * Sends a raw command to the server over the control connection.
+     * Sends a raw command to the server over the control connection
      */
     public void sendCommand(String command) {
         if (writer != null) {
-            writer.print(command + "\r\n"); // FTP standard requires CRLF line endings
+            writer.print(command + "\r\n"); // line endings for ftp standard
             writer.flush();
         }
     }
 
     /**
-     * Reads a response from the control connection using our FTPResponse parser.
+     * Reads a response from the control connection using FTPResponse parser
      */
     public FTPResponse readResponse() throws IOException {
         if (reader == null) {
@@ -49,7 +49,7 @@ public class FTPConnection {
     }
 
     /**
-     * Sends the PASV command, parses the server's response, and opens a new Data Socket.
+     * Sends PASV command, parses server's response, and opens a new Data Socket
      */
     public Socket openPassiveDataConnection() throws IOException {
         sendCommand("PASV");
@@ -59,7 +59,7 @@ public class FTPConnection {
             throw new IOException("Could not enter passive mode: " + response.getMessage());
         }
 
-        // eg 227 Entering Passive Mode (h1,h2,h3,h4,p1,p2).
+        // eg 227 enter passive mode (h1,h2,h3,h4,p1,p2)
         String message = response.getMessage();
         int openParen = message.indexOf('(');
         int closeParen = message.indexOf(')');
@@ -75,10 +75,8 @@ public class FTPConnection {
             throw new IOException("Invalid PASV data format: " + data);
         }
 
-        // Construct IP address from the first 4 parts
         String ipAddress = parts[0] + "." + parts[1] + "." + parts[2] + "." + parts[3];
 
-        // Calculate the port number from the last 2 parts
         int p1 = Integer.parseInt(parts[4]);
         int p2 = Integer.parseInt(parts[5]);
         int dataPort = (p1 * 256) + p2;
@@ -93,7 +91,7 @@ public class FTPConnection {
     }
 
     /**
-     * Closes the control connection and its streams.
+     * Closes control connection and its streams.
      */
     public void close() throws IOException {
         if (writer != null) writer.close();
@@ -106,36 +104,34 @@ public class FTPConnection {
     public static void main(String[] args) {
         FTPConnection connection = new FTPConnection();
         try {
-            System.out.println("Connecting to ftp.gnu.org...");
+            System.out.println("connect to ftp.gnu.org");
             connection.connect("127.0.0.1", 21);
 //            connection.connect("ftp.gnu.org", 21);
 
-
-            // Read the initial welcome message from the server
             FTPResponse welcome = connection.readResponse();
-            System.out.println("Server 108: " + welcome);
+            System.out.println("server line 108: " + welcome);
 
-            // Send Anonymous Login
-            System.out.println("\nSending USER...");
+            // anonymous login
+            System.out.println("\nSending USER");
             connection.sendCommand("USER ann");
 //            connection.sendCommand("USER anonymous");
-            System.out.println("Server 113: " + connection.readResponse());
+            System.out.println("server line 113: " + connection.readResponse());
 
-//             Send Password
-            System.out.println("\nSending PASS...");
+//             send pass
+            System.out.println("\nSending PASS");
             connection.sendCommand("PASS ");
-            System.out.println("Server 118: " + connection.readResponse());
+            System.out.println("server line 118: " + connection.readResponse());
 
 
 
             // cli
             while (true) {
-                System.out.print("\nEnter FTP Command (or 'quit' to exit): ");
+                System.out.print("\enter ftp or 'quit': ");
                 BufferedReader consoleReader = new BufferedReader(new InputStreamReader(System.in));
                 String command = consoleReader.readLine();
                 // pasv
                 if (command.equalsIgnoreCase("pasv")) {
-                    System.out.println("\nRequesting Passive Mode...");
+                    System.out.println("\n request passive mode");
 
                     Socket dataSocket = connection.openPassiveDataConnection();
                     System.out.println("Successfully opened Data Socket to: " +
@@ -159,7 +155,7 @@ public class FTPConnection {
 
 
 
-                    System.out.println("Server PI 159: " + connection.readResponse());
+                    System.out.println("server PI 159: " + connection.readResponse());
                     continue;
 
                 }
@@ -167,11 +163,11 @@ public class FTPConnection {
                     connection.sendCommand("QUIT");
                     System.out.println("Server: " + connection.readResponse());
                     connection.close();
-                    System.out.println("Connection closed safely.");
+                    System.out.println("connection closed");
                     break;
                 }
                 connection.sendCommand(command);
-                System.out.println("Server 169: " + connection.readResponse());
+                System.out.println("server line 169: " + connection.readResponse());
             }
         } catch (Exception e) {
             e.printStackTrace();

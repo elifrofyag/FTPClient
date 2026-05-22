@@ -18,7 +18,7 @@ import java.util.concurrent.Executors;
 
 public class Controller {
 
-    // --- FXML Injected UI Components ---
+    //==== FXML UI components
     @FXML private TextField txtHost;
     @FXML private TextField txtPort;
     @FXML private TextField txtUser;
@@ -35,7 +35,7 @@ public class Controller {
     @FXML private Label lblRemotePath;
     @FXML private TextArea txtLog;
 
-    // --- Application State ---
+    // -==== application state ==
     private FTPClient ftpClient;
     private File currentLocalDir;
     private String currentRemoteDir = "/";
@@ -44,8 +44,7 @@ public class Controller {
     private final ExecutorService executor = Executors.newFixedThreadPool(2);
 
     /**
-     * This method is automatically called by JavaFX after the FXML file is loaded.
-     * It is the equivalent of a constructor for your UI logic.
+     * automatically called by JavaFX after the FXML file is loaded
      */
     @FXML
     public void initialize() {
@@ -67,7 +66,7 @@ public class Controller {
         String user = txtUser.getText();
         String pass = txtPass.getText();
 
-        log("Connecting to " + host + ":" + port + "...");
+        log("Connecting to " + host + ":" + port);
         runFtpTask(() -> {
             ftpClient.connect(host, port);
             ftpClient.login(user, pass);
@@ -80,7 +79,7 @@ public class Controller {
 
     @FXML
     void handleDisconnect(ActionEvent event) {
-        log("Disconnecting...");
+        log("Disconnecting");
         runFtpTask(() -> ftpClient.quit(), () -> {
             tableRemote.getItems().clear();
             lblRemotePath.setText("Disconnected");
@@ -99,7 +98,7 @@ public class Controller {
         if (selection != null && !selection.equals("..")) {
             File localFile = new File(currentLocalDir, selection);
             if (localFile.isFile()) {
-                log("Uploading " + selection + "...");
+                log("Uploading " + selection);
                 runFtpTask(() -> ftpClient.put(localFile.getAbsolutePath(), selection),
                         this::refreshRemoteDirectory);
             } else {
@@ -114,7 +113,7 @@ public class Controller {
         if (selection != null && !selection.equals("..")){
             String remoteFile = selection.getName();
             File targetFile = new File(currentLocalDir, remoteFile);
-            log("Downloading " + remoteFile + "...");
+            log("Downloading " + remoteFile);
             runFtpTask(() -> ftpClient.get(remoteFile, targetFile.getAbsolutePath()),
                     () -> {
                         log("Download complete.");
@@ -128,7 +127,7 @@ public class Controller {
         FTPFile selection = tableRemote.getSelectionModel().getSelectedItem();
         if (selection != null && !selection.equals("..")) {
             String remoteFile = selection.getName();
-            log("Deleting file: " + remoteFile + "...");
+            log("Deleting file: " + remoteFile);
             runFtpTask(() -> ftpClient.delete(remoteFile), this::refreshRemoteDirectory);
         }
     }
@@ -151,7 +150,7 @@ public class Controller {
         FTPFile selection = tableRemote.getSelectionModel().getSelectedItem();
         if (selection != null && !selection.equals("..")) {
             String targetDir = selection.getName();
-            log("Removing directory: " + targetDir + "...");
+            log("Removing directory: " + targetDir);
             runFtpTask(() -> ftpClient.rmdir(targetDir), this::refreshRemoteDirectory);
         } else {
             log("Please select a directory to remove.");
@@ -221,7 +220,7 @@ public class Controller {
     }
 
     private void refreshRemoteDirectory() {
-        log("Fetching remote directory list...");
+        log("Fetching remote directory list");
         runFtpTask(() -> {
             List<String> rawFiles = ftpClient.list("");
 
@@ -229,10 +228,9 @@ public class Controller {
                 lblRemotePath.setText(currentRemoteDir);
                 tableRemote.getItems().clear();
 
-                // Add the "Go Back" folder manually
+                // "go back" entry
                 tableRemote.getItems().add(new FTPFile("..", 0, "--", "drwxrwxrwx", true, ""));
 
-                // Parse the rest!
                 for (String rawLine : rawFiles) {
                     FTPFile parsedFile = ListParser.parse(rawLine);
                     if (parsedFile != null) {
@@ -250,7 +248,7 @@ public class Controller {
 
     private void runFtpTask(NetworkTask taskLogic, Runnable onSuccess) {
         if (isBusy) {
-            log("Command ignored: Waiting for previous task to finish...");
+            log("Command ignored: Waiting for previous task to finish");
             return;
         }
         isBusy = true;
@@ -292,7 +290,7 @@ public class Controller {
     }
 
     public void shutdown() {
-        System.out.println("Initiating shutdown...");
+        System.out.println("Initiating shutdown");
 
         if (executor != null && !executor.isShutdown()) {
             executor.shutdownNow();

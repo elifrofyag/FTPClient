@@ -11,8 +11,7 @@ import java.util.List;
 
 /**
  * A simple FTP client that can connect to an FTP server, log in, navigate directories, and disconnect.
- * for now, client is designed for demonstration purposes and does not implement all FTP features (like file transfers).
- *
+ * Supports basic file operations like listing files, uploading, and downloading and creating/deleting directories.
  * @author Van An Nguyen
  */
 
@@ -24,7 +23,7 @@ public class FTPClient {
     }
 
     /**
-     * Helper method to send a command and throw an exception if the response code isn't what was expected.
+     * Helper method to send a command and throw an exception if response code isn't what was expected.
      */
     private FTPResponse executeCommand(String command, int... expectedCodes) throws IOException {
         connection.sendCommand(command);
@@ -53,7 +52,7 @@ public class FTPClient {
     }
 
     public void login(String username, String password) throws IOException {
-        // Send user, expect 331 (Need password) or 230 (Already logged in - no need for password)
+        // send user -> 331 (need pass) or 230 (already logged in no need for password)
         FTPResponse userResponse = executeCommand("USER " + username, 331, 230);
 
         if (userResponse.getCode() == 331) {
@@ -71,7 +70,7 @@ public class FTPClient {
         if (firstQuote != -1 && secondQuote != -1) {
             return msg.substring(firstQuote + 1, secondQuote);
         }
-        return msg; // Fallback if the server format is weird
+        return msg;
     }
 
     public void cd(String path) throws IOException {
@@ -103,8 +102,8 @@ public class FTPClient {
         List<String> fileList = new ArrayList<>();
         Socket dataSocket = connection.openPassiveDataConnection();
 
-        // 150: File status okay; about to open data connection.
-        // 125: Data connection already open; transfer starting.
+        // 150: file status okay, about to open data connection
+        // 125: data connection already open, transfer starting
         String cmd = (path == null || path.trim().isEmpty()) ? "LIST" : "LIST " + path;
         executeCommand(cmd, 150, 125);
 
@@ -126,7 +125,7 @@ public class FTPClient {
     }
 
     public void get(String remoteFile, String localPath) throws IOException {
-        executeCommand("TYPE I", 200); // Set to Binary/Image mode
+        executeCommand("TYPE I", 200);
         Socket dataSocket = connection.openPassiveDataConnection();
 
         executeCommand("RETR " + remoteFile, 150, 125);
@@ -134,7 +133,7 @@ public class FTPClient {
         try (InputStream in = dataSocket.getInputStream();
              FileOutputStream out = new FileOutputStream(localPath)) {
 
-            byte[] buffer = new byte[8192]; // 8KB chunks
+            byte[] buffer = new byte[8192];
             int bytesRead;
             while ((bytesRead = in.read(buffer)) != -1) {
                 out.write(buffer, 0, bytesRead);
@@ -150,7 +149,7 @@ public class FTPClient {
     }
 
     public void put(String localPath, String remoteFile) throws IOException {
-        executeCommand("TYPE I", 200); // Set to Binary/Image mode
+        executeCommand("TYPE I", 200);
         Socket dataSocket = connection.openPassiveDataConnection();
 
         executeCommand("STOR " + remoteFile, 150, 125);
@@ -163,7 +162,7 @@ public class FTPClient {
             while ((bytesRead = in.read(buffer)) != -1) {
                 out.write(buffer, 0, bytesRead);
             }
-            out.flush(); // Ensure the last chunk is pushed to the network
+            out.flush();
         } finally {
             dataSocket.close();
         }

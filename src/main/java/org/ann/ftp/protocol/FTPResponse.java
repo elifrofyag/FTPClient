@@ -4,8 +4,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 
 /**
- * Represents a parsed FTP response, including the status code, message, and whether it's a multiline response; essential for interpreting responses from an FTP server and can be used in any FTP client implementation to handle server communication effectively.
- * This class provides methods to parse raw FTP response lines and to read full responses from a BufferedReader, handling both single-line and multiline formats according to the FTP protocol specifications.
+ * Represents a parsed FTP response, including the status code, message, and whether it's a multiline response.
+ * provides methods to parse raw FTP response lines and to read full responses from a BufferedReader, handling both single-line and multiline formats
  *
  * @author Van An Nguyen
  *
@@ -45,7 +45,7 @@ public class FTPResponse {
             // ftp status code XXX
             int code = Integer.parseInt(rawLine.substring(0, 3));
 
-            // multiline response "220-"
+            // multiline response eg "220-"
             boolean isMulti = rawLine.length() >= 4 && rawLine.charAt(3) == '-';
 
             // extract text message
@@ -69,12 +69,12 @@ public class FTPResponse {
 
         FTPResponse firstLineResponse = parse(line);
 
-        // If standard single-line response, we are done.
+        // if standard single line res -> done
         if (!firstLineResponse.isMultiline()) {
             return firstLineResponse;
         }
 
-        // Handle Multiline Response
+        // multiline response -> read until find the termination line
         int expectedCode = firstLineResponse.getCode();
         StringBuilder fullMessage = new StringBuilder(firstLineResponse.getMessage());
         fullMessage.append("\n");
@@ -82,7 +82,7 @@ public class FTPResponse {
         while ((line = reader.readLine()) != null) {
             fullMessage.append(line).append("\n");
 
-            // termination condition for multiline response "XXX "
+            // termination condition for multiline "XXX "
             if (line.length() >= 4 && line.startsWith(expectedCode + " ")) {
                 break;
             }
@@ -101,7 +101,6 @@ public class FTPResponse {
 
     /*
     public static void main(String[] args) {
-        // We simulate a raw multiline response coming from the server over a network socket
         String simulatedServerData =
                 "123-First line\n" +
                         "Second line\n" +
@@ -109,7 +108,6 @@ public class FTPResponse {
                         "123 The last line\n";
         String simulatedSingleLineResponse = "220 Service ready for new user.\n";
 
-        // Wrap the String in a BufferedReader so readFull() can consume it line-by-line
         try (BufferedReader reader = new BufferedReader(new java.io.StringReader(simulatedServerData));
         BufferedReader singleLineReader = new BufferedReader(new java.io.StringReader(simulatedSingleLineResponse))) {
 
@@ -120,10 +118,10 @@ public class FTPResponse {
             System.out.println(singleLineResponseObj.toString());
 
 
-            System.out.println("--- INTERNAL DATA ---");
+            System.out.println("---INTERNAL DATA");
             System.out.println("Parsed Code: " + response.getCode());
             System.out.println("Parsed Message:\n" + response.getMessage());
-            System.out.println("\n--- GUI LOG OUTPUT (toString) ---");
+            System.out.println("\n--- GUI LOG OUTPUT ---");
             System.out.println(response.toString());
 
         } catch (IOException e) {
