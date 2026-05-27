@@ -33,7 +33,7 @@ public class Controller {
     @FXML private TableColumn<FTPFile, String> colPerms;
     @FXML private Label lblLocalPath;
     @FXML private Label lblRemotePath;
-    @FXML private TextArea txtLog;
+    @FXML private ListView<String> txtLog;
 
     // -==== application state ==
     private FTPClient ftpClient;
@@ -53,6 +53,7 @@ public class Controller {
         currentLocalDir = new File(System.getProperty("user.home"));
         setupTableViewColumns();
         setupTableViewDoubleClicks();
+        setupLogColors();
         loadLocalDirectory();
     }
 
@@ -98,7 +99,7 @@ public class Controller {
                 runFtpTask(() -> ftpClient.put(localFile.getAbsolutePath(), selection),
                         this::refreshRemoteDirectory);
             } else {
-                log("Cannot upload directories yet.");
+                log("Cannot upload directories yet");
             }
         }
     }
@@ -231,7 +232,35 @@ public class Controller {
     }
 
     private void log(String message) {
-        Platform.runLater(() -> txtLog.appendText(message + "\n"));
+        Platform.runLater(() -> {
+            txtLog.getItems().add(message);
+            txtLog.scrollTo(txtLog.getItems().size() - 1);
+        });
+    }
+
+    private void setupLogColors() {
+        txtLog.setCellFactory(listView -> new ListCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+
+                if (empty || item == null) {
+                    setText(null);
+                    setStyle("");
+                    return;
+                }
+
+
+                setText(item);
+                if (item.startsWith("[server]")) {
+                    setStyle("-fx-text-fill: #1f8f45;");
+                } else if (item.startsWith("[client]")) {
+                    setStyle("-fx-text-fill: #2364c8;");
+                } else {
+                    setStyle("-fx-text-fill: #2b3437;");
+                }
+            }
+        });
     }
 
 
@@ -271,7 +300,7 @@ public class Controller {
             log("ERROR: " + ex.getMessage());
 
             if (!(ex instanceof org.ann.ftp.util.FTPException)) {
-                System.err.println("\n--- SYSTEM ERROR ---");
+                System.err.println("\n---ERROR ---");
                 ex.printStackTrace();
             }
         });

@@ -115,7 +115,7 @@
 
 
 /* --- log console --- */
-.text-area {
+.text-area, .log-list {
     -fx-background-color: #f1f4f6;
     -fx-text-fill: #2b3437;
     -fx-font-family: "Consolas", monospace;
@@ -123,4 +123,10 @@
 }
 .text-area .content {
     -fx-background-color: transparent;
+}
+
+.log-list .list-cell {
+    -fx-background-color: #f1f4f6;
+    -fx-font-family: "Consolas", monospace;
+    -fx-font-size: 12px;
 }

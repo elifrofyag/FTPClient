@@ -84,7 +84,7 @@
                 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
             </padding>
             <Label text="SYSTEM LOG CONSOLE" />
-            <TextArea fx:id="txtLog" editable="false" prefHeight="150.0" />
+            <ListView fx:id="txtLog" prefHeight="150.0" styleClass="log-list" />
         </VBox>
     </bottom>
 
