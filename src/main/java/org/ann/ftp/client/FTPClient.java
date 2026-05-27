@@ -8,6 +8,7 @@ import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * A simple FTP client that can connect to an FTP server, log in, navigate directories, and disconnect.
@@ -20,6 +21,10 @@ public class FTPClient {
 
     public FTPClient() {
         this.connection = new FTPConnection();
+    }
+
+    public void setTrafficListener(Consumer<String> trafficListener) {
+        connection.setTrafficListener(trafficListener);
     }
 
     /**

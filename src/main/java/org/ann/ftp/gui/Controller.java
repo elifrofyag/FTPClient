@@ -49,6 +49,7 @@ public class Controller {
     @FXML
     public void initialize() {
         ftpClient = new FTPClient();
+        ftpClient.setTrafficListener(this::log);
         currentLocalDir = new File(System.getProperty("user.home"));
         setupTableViewColumns();
         setupTableViewDoubleClicks();
@@ -66,24 +67,20 @@ public class Controller {
         String user = txtUser.getText();
         String pass = txtPass.getText();
 
-        log("Connecting to " + host + ":" + port);
         runFtpTask(() -> {
             ftpClient.connect(host, port);
             ftpClient.login(user, pass);
             currentRemoteDir = ftpClient.pwd();
         }, () -> {
-            log("Login successful!");
             refreshRemoteDirectory();
         });
     }
 
     @FXML
     void handleDisconnect(ActionEvent event) {
-        log("Disconnecting");
         runFtpTask(() -> ftpClient.quit(), () -> {
             tableRemote.getItems().clear();
             lblRemotePath.setText("Disconnected");
-            log("Disconnected safely.");
         });
     }
 
@@ -98,7 +95,6 @@ public class Controller {
         if (selection != null && !selection.equals("..")) {
             File localFile = new File(currentLocalDir, selection);
             if (localFile.isFile()) {
-                log("Uploading " + selection);
                 runFtpTask(() -> ftpClient.put(localFile.getAbsolutePath(), selection),
                         this::refreshRemoteDirectory);
             } else {
@@ -113,10 +109,8 @@ public class Controller {
         if (selection != null && !selection.equals("..")){
             String remoteFile = selection.getName();
             File targetFile = new File(currentLocalDir, remoteFile);
-            log("Downloading " + remoteFile);
             runFtpTask(() -> ftpClient.get(remoteFile, targetFile.getAbsolutePath()),
                     () -> {
-                        log("Download complete.");
                         loadLocalDirectory();
                     });
         }
@@ -127,7 +121,6 @@ public class Controller {
         FTPFile selection = tableRemote.getSelectionModel().getSelectedItem();
         if (selection != null && !selection.equals("..")) {
             String remoteFile = selection.getName();
-            log("Deleting file: " + remoteFile);
             runFtpTask(() -> ftpClient.delete(remoteFile), this::refreshRemoteDirectory);
         }
     }
@@ -140,7 +133,6 @@ public class Controller {
         Optional<String> result = dialog.showAndWait();
 
         result.ifPresent(dirName -> {
-            log("Creating directory: " + dirName);
             runFtpTask(() -> ftpClient.mkdir(dirName), this::refreshRemoteDirectory);
         });
     }
@@ -150,7 +142,6 @@ public class Controller {
         FTPFile selection = tableRemote.getSelectionModel().getSelectedItem();
         if (selection != null && !selection.equals("..")) {
             String targetDir = selection.getName();
-            log("Removing directory: " + targetDir);
             runFtpTask(() -> ftpClient.rmdir(targetDir), this::refreshRemoteDirectory);
         } else {
             log("Please select a directory to remove.");
@@ -191,7 +182,6 @@ public class Controller {
                 FTPFile selection = tableRemote.getSelectionModel().getSelectedItem();
                 if (selection != null) {
                     String targetDir = selection.equals("..") ? ".." : selection.getName();
-                    log("Navigating to: " + targetDir);
                     runFtpTask(() -> {
                         ftpClient.cd(targetDir);
                         currentRemoteDir = ftpClient.pwd();
@@ -220,7 +210,6 @@ public class Controller {
     }
 
     private void refreshRemoteDirectory() {
-        log("Fetching remote directory list");
         runFtpTask(() -> {
             List<String> rawFiles = ftpClient.list("");
 
@@ -238,7 +227,7 @@ public class Controller {
                     }
                 }
             });
-        }, () -> log("Remote directory updated."));
+        }, null);
     }
 
     private void log(String message) {

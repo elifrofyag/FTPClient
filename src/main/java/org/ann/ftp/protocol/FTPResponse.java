@@ -2,6 +2,7 @@ package org.ann.ftp.protocol;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.util.function.Consumer;
 
 /**
  * Represents a parsed FTP response, including the status code, message, and whether it's a multiline response.
@@ -61,10 +62,13 @@ public class FTPResponse {
     /**
      * Reads a full response from the server, handling both single and multiline formats.
      */
-    public static FTPResponse readFull(BufferedReader reader) throws IOException {
+    public static FTPResponse readFull(BufferedReader reader, Consumer<String> rawLineHandler) throws IOException {
         String line = reader.readLine();
         if (line == null) {
             throw new IOException("Connection closed prematurely by the FTP server.");
+        }
+        if (rawLineHandler != null) {
+            rawLineHandler.accept(line);
         }
 
         FTPResponse firstLineResponse = parse(line);
@@ -80,6 +84,9 @@ public class FTPResponse {
         fullMessage.append("\n");
 
         while ((line = reader.readLine()) != null) {
+            if (rawLineHandler != null) {
+                rawLineHandler.accept(line);
+            }
             fullMessage.append(line).append("\n");
 
             // termination condition for multiline "XXX "

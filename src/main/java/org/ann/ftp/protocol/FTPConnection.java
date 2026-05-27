@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.function.Consumer;
 
 /**
  * FTPConnection manages the control connection to an FTP server. It allows sending commands and reading responses.
@@ -17,6 +18,11 @@ public class FTPConnection {
     private Socket controlSocket;
     private BufferedReader reader;
     private PrintWriter writer;
+    private Consumer<String> trafficListener;
+
+    public void setTrafficListener(Consumer<String> trafficListener) {
+        this.trafficListener = trafficListener;
+    }
 
     /**
      * Establishes control connection to FTP server.
@@ -24,7 +30,6 @@ public class FTPConnection {
     public void connect(String host, int port) throws IOException {
         controlSocket = new Socket(host, port);
         reader = new BufferedReader(new InputStreamReader(controlSocket.getInputStream(), "UTF-8"));
-        // Auto-flush is false; we will manually flush to ensure commands are sent immediately
         writer = new PrintWriter(new OutputStreamWriter(controlSocket.getOutputStream(), "UTF-8"), false);
     }
 
@@ -33,8 +38,9 @@ public class FTPConnection {
      */
     public void sendCommand(String command) {
         if (writer != null) {
-            writer.print(command + "\r\n"); // line endings for ftp standard
+            writer.print(command + "\r\n");
             writer.flush();
+            logTraffic("[client] " + command);
         }
     }
 
@@ -45,7 +51,13 @@ public class FTPConnection {
         if (reader == null) {
             throw new IOException("Not connected to server.");
         }
-        return FTPResponse.readFull(reader);
+        return FTPResponse.readFull(reader, line -> logTraffic("[server] " + line));
+    }
+
+    private void logTraffic(String line) {
+        if (trafficListener != null) {
+            trafficListener.accept(line);
+        }
     }
 
     /**
@@ -83,7 +95,7 @@ public class FTPConnection {
 
         System.out.println("DEBUG - Connecting to DATA socket: " + ipAddress + ":" + dataPort);
 
-        try { Thread.sleep(100); } catch (InterruptedException e) { } // try to fix intermittent connection timeout
+        try { Thread.sleep(100); } catch (InterruptedException e) { }
 
         Socket dataSocket = new Socket();
         dataSocket.connect(new java.net.InetSocketAddress(ipAddress, dataPort), 10000);
@@ -112,13 +124,11 @@ public class FTPConnection {
             System.out.println("server line 108: " + welcome);
 
             // anonymous login
-            System.out.println("\nSending USER");
             connection.sendCommand("USER ann");
 //            connection.sendCommand("USER anonymous");
             System.out.println("server line 113: " + connection.readResponse());
 
 //             send pass
-            System.out.println("\nSending PASS");
             connection.sendCommand("PASS ");
             System.out.println("server line 118: " + connection.readResponse());
 
@@ -134,7 +144,7 @@ public class FTPConnection {
                     System.out.println("\n request passive mode");
 
                     Socket dataSocket = connection.openPassiveDataConnection();
-                    System.out.println("Successfully opened Data Socket to: " +
+                    System.out.println("successfully open data socket: " +
                             dataSocket.getInetAddress().getHostAddress() +
                             " on port " + dataSocket.getPort());
                     //  command from user
@@ -144,11 +154,11 @@ public class FTPConnection {
 
                     try (BufferedReader dataReader = new BufferedReader(new InputStreamReader(dataSocket.getInputStream()))) {
                         String line;
-                        System.out.println("\n--- DATA RECEIVED ---");
+                        System.out.println("\nDATA RECEIVED---");
                         while ((line = dataReader.readLine()) != null) {
                             System.out.println(line);
                         }
-                        System.out.println("--- END OF DATA ---\n");
+                        System.out.println("-END OF DATA---\n");
                     } finally {
                         dataSocket.close();
                     }
